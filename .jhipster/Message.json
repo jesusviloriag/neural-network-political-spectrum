@@ -1,0 +1,24 @@
+{
+  "changelogDate": "20230222234545",
+  "fields": [
+    {
+      "fieldName": "text",
+      "fieldType": "byte[]",
+      "fieldTypeBlobContent": "text",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "manualBias",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "aIBias",
+      "fieldType": "String"
+    }
+  ],
+  "name": "Message",
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [],
+  "service": "no"
+}

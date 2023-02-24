@@ -1,0 +1,33 @@
+{
+  "changelogDate": "20230223234411",
+  "fields": [
+    {
+      "fieldName": "twitterFeedFile",
+      "fieldType": "byte[]",
+      "fieldTypeBlobContent": "any",
+      "fieldValidateRules": ["required"]
+    },
+    {
+      "fieldName": "aiFile",
+      "fieldType": "byte[]",
+      "fieldTypeBlobContent": "any"
+    },
+    {
+      "fieldName": "timeStamp",
+      "fieldType": "ZonedDateTime"
+    },
+    {
+      "fieldName": "status",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "isLeft",
+      "fieldType": "Boolean"
+    }
+  ],
+  "name": "Training",
+  "pagination": "pagination",
+  "readOnly": false,
+  "relationships": [],
+  "service": "no"
+}
