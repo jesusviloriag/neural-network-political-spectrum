@@ -24,6 +24,16 @@ export const getEntities = createAsyncThunk('message/fetch_entity_list', async (
   return axios.get<IMessage[]>(requestUrl);
 });
 
+export const generateMessage = createAsyncThunk(
+  'training/do_training',
+  async () => {
+    const result = await axios.get<IMessage>(apiUrl + '/generate?');
+    alert(result.data.text + '\n' + result.data.aIBias);
+    return result;
+  },
+  { serializeError: serializeAxiosError }
+);
+
 export const getEntity = createAsyncThunk(
   'message/fetch_entity',
   async (id: string | number) => {

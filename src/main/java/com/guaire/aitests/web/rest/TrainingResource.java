@@ -7,15 +7,20 @@ import com.guaire.aitests.repository.MessageRepository;
 import com.guaire.aitests.repository.TrainingRepository;
 import com.guaire.aitests.repository.WordRepository;
 import com.guaire.aitests.web.rest.errors.BadRequestAlertException;
-
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import org.neuroph.core.Layer;
+import org.neuroph.core.NeuralNetwork;
+import org.neuroph.core.Neuron;
+import org.neuroph.core.data.DataSet;
+import org.neuroph.core.data.DataSetRow;
+import org.neuroph.nnet.learning.BackPropagation;
+import org.neuroph.util.ConnectionFactory;
+import org.neuroph.util.NeuralNetworkType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,16 +35,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.HeaderUtil;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
-import java.util.Collections;
-
-import org.neuroph.core.Layer;
-import org.neuroph.core.NeuralNetwork;
-import org.neuroph.core.Neuron;
-import org.neuroph.core.data.DataSet;
-import org.neuroph.core.data.DataSetRow;
-import org.neuroph.nnet.learning.BackPropagation;
-import org.neuroph.util.ConnectionFactory;
-import org.neuroph.util.NeuralNetworkType;
 
 /**
  * REST controller for managing {@link com.guaire.aitests.domain.Training}.
@@ -87,7 +82,7 @@ public class TrainingResource {
 
         String line = "";
         String bias = "";
-        if(training.getIsLeft()) {
+        if (training.getIsLeft()) {
             bias = "left";
         } else {
             bias = "right";
@@ -99,16 +94,14 @@ public class TrainingResource {
         InputStream inputStream = null;
         BufferedReader buffReader = null;
 
-        if(wordsFile != null) {
+        if (wordsFile != null) {
             inputStream = new ByteArrayInputStream(wordsFile);
             buffReader = new BufferedReader(new InputStreamReader(inputStream));
 
             while ((line = buffReader.readLine()) != null) {
-
                 System.out.println(line);
 
                 if (!line.isBlank() && !line.isEmpty()) {
-
                     if (!line.contains("http") || !line.isEmpty() || !line.isBlank()) {
                         saveWord(cleanWord(line));
                     }
@@ -122,7 +115,6 @@ public class TrainingResource {
         line = "";
         int conti = 0;
         while ((line = buffReader.readLine()) != null) {
-
             System.out.println(line);
 
             if (!line.isBlank() && !line.isEmpty()) {
@@ -148,17 +140,17 @@ public class TrainingResource {
         word = word.replace(".", "");
         word = word.replace(",", "");
         word = word.replace(";", "");
-        word = word.replace("“","");
-        word = word.replace("”","");
-        word = word.replace("'s","");
+        word = word.replace("“", "");
+        word = word.replace("”", "");
+        word = word.replace("'s", "");
         word = word.toLowerCase();
         return word;
     }
 
     private void saveWord(String word) {
         List<Word> words = wordRepository.findByName_IgnoreCase(word);
-        if(words == null || words.size() == 0) {
-            Double maxNumberForRefference = (double)wordRepository.count() + 1;
+        if (words == null || words.size() == 0) {
+            Double maxNumberForRefference = (double) wordRepository.count() + 1;
 
             Word oWord = new Word();
             oWord.setName(cleanWord(word));
@@ -187,22 +179,22 @@ public class TrainingResource {
         }
 
         Layer hiddenLayerTwo = new Layer();
-        for (int i = 0; i <  inputSize / 3; i++) {
+        for (int i = 0; i < inputSize / 3; i++) {
             hiddenLayerTwo.addNeuron(new Neuron());
         }
 
         Layer hiddenLayerThree = new Layer();
-        for (int i = 0; i <= outputSize * 4 ; i++) {
+        for (int i = 0; i <= outputSize * 4; i++) {
             hiddenLayerThree.addNeuron(new Neuron());
         }
 
         Layer hiddenLayerFour = new Layer();
-        for (int i = 0; i < outputSize * 3 ; i++) {
+        for (int i = 0; i < outputSize * 3; i++) {
             hiddenLayerFour.addNeuron(new Neuron());
         }
 
         Layer hiddenLayerFive = new Layer();
-        for (int i = 0; i < outputSize * 2 ; i++) {
+        for (int i = 0; i < outputSize * 2; i++) {
             hiddenLayerFive.addNeuron(new Neuron());
         }
 
@@ -249,8 +241,8 @@ public class TrainingResource {
             String[] words = message.getText().split(" ");
             int cont = 0;
             boolean addedInfo = false;
-            for(String word : words) {
-                if(cont >= aIInputSize - 1) {
+            for (String word : words) {
+                if (cont >= aIInputSize - 1) {
                     break;
                 }
 
@@ -261,7 +253,7 @@ public class TrainingResource {
                     System.out.println("Skipping word " + word);
                 }
 
-                if(numberValue != 0d) {
+                if (numberValue != 0d) {
                     addedInfo = true;
                 }
 
@@ -269,7 +261,7 @@ public class TrainingResource {
                 cont++;
             }
 
-            if(message.getManualBias().equals("left")) {
+            if (message.getManualBias().equals("left")) {
                 result[0] = 1;
                 result[1] = 0;
             } else {
@@ -320,11 +312,83 @@ public class TrainingResource {
 
     public double getWordNumber(String word, List<Word> words) {
         for (Word oWord : words) {
-            if(oWord.getName().equals(cleanWord(word))) {
+            if (oWord.getName().equals(cleanWord(word))) {
                 return oWord.getValue();
             }
         }
         return 0d;
+    }
+
+    @GetMapping("/messages/generate")
+    public ResponseEntity<Message> generate() throws IOException, URISyntaxException {
+        Training training = trainingRepository.getByStatus("trained!");
+
+        File file = new File("Net.nnet");
+
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(training.getAiFile()); //write files into byte
+        fos.close();
+
+        NeuralNetwork ann = NeuralNetwork.createFromFile("Net.nnet");
+
+        //fill info here
+        double input[] = new double[aIInputSize];
+        Random rand = new Random();
+        int sentenceLength = rand.nextInt(25);
+        int cont = 0;
+
+        boolean goodSentenceFound = false;
+        String leftOrRight = "";
+        do {
+            //creating a random sentence using numbers
+            for (int i = 0; i < sentenceLength; i++) {
+                int test = rand.nextInt(5);
+                if (test == 1) {
+                    input[i] = rand.nextInt((int) (wordRepository.count() - 1)); //all words
+                } else if (test == 2) {
+                    input[i] = rand.nextInt((int) (200 - 1)); //common words
+                } else {
+                    input[i] = rand.nextInt((int) (100 - 1)); //more common words
+                }
+            }
+
+            ann.setInput(input);
+            ann.calculate();
+            double[] networkOutputOne = ann.getOutput();
+
+            System.out.println(networkOutputOne[0] + " " + networkOutputOne[1]);
+
+            if (networkOutputOne[0] == 1d) {
+                leftOrRight += "left ";
+                goodSentenceFound = true;
+            }
+            if (networkOutputOne[1] == 1d) {
+                leftOrRight += "right";
+                goodSentenceFound = true;
+            }
+            if (networkOutputOne[0] == 0d && networkOutputOne[1] == 0d) {
+                leftOrRight += "neutral";
+                goodSentenceFound = true;
+            }
+        } while (!goodSentenceFound);
+
+        String sentenceWords = "";
+        for (int i = 0; i < sentenceLength; i++) {
+            Word word = wordRepository.getByValue(input[i]);
+            if (word != null) {
+                sentenceWords += word.getName() + " ";
+            }
+        }
+
+        Message result = new Message();
+        result.setText(sentenceWords);
+        result.setaIBias(leftOrRight);
+        result.setId(1L);
+
+        return ResponseEntity
+            .ok()
+            .headers(HeaderUtil.createEntityUpdateAlert(applicationName, false, ENTITY_NAME, result.getId().toString()))
+            .body(result);
     }
 
     public String calculateLeftOrRight(String tweet) throws IOException {
@@ -342,16 +406,20 @@ public class TrainingResource {
         double input[] = new double[aIInputSize];
         String[] words = tweet.split(" ");
         int cont = 0;
-        for(String word : words) {
-            if(cont >= aIInputSize - 1) {
+        for (String word : words) {
+            if (cont >= aIInputSize - 1) {
                 break;
             }
 
             Double numberValue = 0d;
             try {
                 numberValue = wordRepository.findByName_IgnoreCase(cleanWord(word)).get(0).getValue();
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 System.out.println("Word not found, skipping: " + word);
+            }
+
+            if (numberValue == null) {
+                numberValue = 0d;
             }
 
             input[cont] = numberValue;
@@ -363,7 +431,7 @@ public class TrainingResource {
         double[] networkOutputOne = ann.getOutput();
 
         String leftOrRight = "";
-        if(networkOutputOne[0] != 0d) {
+        if (networkOutputOne[0] != 0d) {
             leftOrRight += "left ";
         } else if (networkOutputOne[1] != 0d) {
             leftOrRight += "right";

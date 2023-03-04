@@ -10,7 +10,7 @@ import { overridePaginationStateWithQueryParams } from 'app/shared/util/entity-u
 import { useAppDispatch, useAppSelector } from 'app/config/store';
 
 import { IMessage } from 'app/shared/model/message.model';
-import { getEntities } from './message.reducer';
+import { getEntities, generateMessage } from './message.reducer';
 
 export const Message = () => {
   const dispatch = useAppDispatch();
@@ -81,6 +81,10 @@ export const Message = () => {
     sortEntities();
   };
 
+  const handleGenerate = () => {
+    dispatch(generateMessage());
+  };
+
   return (
     <div>
       <h2 id="message-heading" data-cy="MessageHeading">
@@ -88,6 +92,9 @@ export const Message = () => {
         <div className="d-flex justify-content-end">
           <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
             <FontAwesomeIcon icon="sync" spin={loading} /> Refresh list
+          </Button>
+          <Button className="me-2" color="success" onClick={handleGenerate} disabled={loading}>
+            <FontAwesomeIcon icon="plus" spin={loading} /> Generate random message
           </Button>
           <Link to="/message/new" className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
             <FontAwesomeIcon icon="plus" />
